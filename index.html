@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Lucu-Lucuan</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; margin: 0; padding: 10px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { width: 100%; max-width: 480px; background: white; padding: 20px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); display: flex; flex-direction: column; }
+        h2 { text-align: center; color: #1c1e21; margin-top: 0; margin-bottom: 15px; font-size: 22px; }
+        .status-box { background: #e7f3ff; padding: 12px; border-radius: 10px; margin-bottom: 15px; font-size: 14px; color: #1877f2; text-align: center; font-weight: 500; border: 1px solid #d2e7ff; }
+        .room-controls { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; background: #f7f8fa; padding: 12px; border-radius: 12px; }
+        .input-group { display: flex; gap: 8px; }
+        .room-controls input { flex: 1; padding: 10px 14px; border: 1px solid #ccd0d5; border-radius: 8px; font-size: 14px; outline: none; }
+        .btn { padding: 10px 16px; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
+        .btn-blue { background: #1877f2; }
+        .btn-purple { background: #6f42c1; padding: 12px; font-size: 14px; }
+        .chat-box { height: 280px; border: 1px solid #e4e6eb; border-radius: 12px; padding: 12px; overflow-y: auto; background: #f9fafb; margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px; }
+        .message { padding: 10px 14px; border-radius: 14px; background: #e4e6eb; color: #050505; width: fit-content; max-width: 85%; word-break: break-word; font-size: 15px; line-height: 1.4; }
+        .message.system { background: #fff3cd; color: #856404; font-style: italic; margin: 4px auto; font-size: 12px; text-align: center; width: 100%; border: 1px solid #ffeeba; border-radius: 8px; padding: 8px; }
+        .input-box { display: flex; gap: 8px; }
+        .input-box input { flex: 1; padding: 12px 16px; border: 1px solid #ccd0d5; border-radius: 24px; font-size: 14px; outline: none; }
+        .btn-green { background: #00a884; border-radius: 24px; padding: 12px 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>💬 Ruang Ngobrol</h2>
+    
+    <div class="status-box" id="statusRoom">Kamu berada di: <b>Global Chat</b></div>
+    
+    <div class="room-controls">
+        <button class="btn btn-purple" onclick="buatRoomOtomatis()">✨ Buat Room Privat Baru</button>
+        
+        <div class="input-group">
+            <input type="text" id="kodeRoomInput" placeholder="Atau tempel kode room teman...">
+            <button class="btn btn-blue" onclick="gabungRoomManual()">Masuk</button>
+        </div>
+    </div>
+
+    <div class="chat-box" id="chatBox">
+        <div class="message system">Selamat datang di Global Chat! Semua orang bisa melihat pesanmu di sini.</div>
+    </div>
+
+    <div class="input-box">
+        <input type="text" id="pesanInput" placeholder="Ketik pesan kamu..." onkeypress="cekEnter(event)">
+        <button class="btn btn-green" onclick="kirimPesan()">Kirim</button>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+    // DATA KONFIGURASI PROYEK KAMU (SOLSTISIEL)
+    const firebaseConfig = {
+        apiKey: "AIzaSyCtW62wK4HTiPgw7x_ZCju0_z1pEiJYbPE",
+        authDomain: "solstisiel.firebaseapp.com",
+        databaseURL: "https://solstisiel-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "solstisiel",
+        storageBucket: "solstisiel.firebasestorage.app",
+        messagingSenderId: "809987341662",
+        appId: "1:809987341662:web:f36fbacd414a2c82e963cf"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    const userId = Math.random().toString(36).substring(2, 5).toUpperCase();
+    let roomAktif = 'global';
+    let dbRef = database.ref('chats/' + roomAktif);
+
+    function dengerinChat() {
+        dbRef.off();
+        dbRef.on('child_added', function(snapshot) {
+            const data = snapshot.val();
+            tampilkanPesan(data.pengirim, data.teks);
+        });
+    }
+
+    dengerinChat();
+
+    function kirimPesan() {
+        const input = document.getElementById('pesanInput');
+        const pesan = input.value.trim();
+        if (pesan === '') return;
+
+        dbRef.push({
+            pengirim: userId,
+            teks: pesan,
+            timestamp: Date.now()
+        });
+        
+        input.value = '';
+    }
+
+    function buatRoomOtomatis() {
+        const kodeAcak = "ROOM-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+        pindahKeRoom(kodeAcak);
+    }
+
+    function gabungRoomManual() {
+        const kodeInput = document.getElementById('kodeRoomInput').value.trim();
+        if (kodeInput === '') return alert('Masukkan kode room terlebih dahulu!');
+        pindahKeRoom(kodeInput);
+    }
+
+    function pindahKeRoom(kodeRoom) {
+        roomAktif = kodeRoom;
+        dbRef = database.ref('chats/' + roomAktif);
+
+        document.getElementById('statusRoom').innerHTML = 'Kamu berada di Private Room: <b style="color:#6f42c1;">' + kodeRoom + '</b>';
+        
+        const chatBox = document.getElementById('chatBox');
+        chatBox.innerHTML = '<div class="message system">Room "' + kodeRoom + '" berhasil dibuat! Salin kode ini dan bagikan ke temanmu.</div>';
+        
+        dengerinChat();
+    }
+
+    function tampilkanPesan(pengirim, teks) {
+        const chatBox = document.getElementById('chatBox');
+        const elemenPesan = document.createElement('div');
+        elemenPesan.classList.add('message');
+        
+        elemenPesan.innerHTML = '<span style="font-size:11px; display:block; color:#65676b; font-weight:bold; margin-bottom:2px;">User-' + pengirim + '</span>' + teks;
+        
+        chatBox.appendChild(elemenPesan);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function cekEnter(event) {
+        if (event.key === 'Enter') {
+            kirimPesan();
+        }
+    }
+</script>
+</body>
+</html>
