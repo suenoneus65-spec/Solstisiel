@@ -3,16 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solstisiel Chat</title>
+    <title>Solstisiel</title>
     <style>
         * { box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; margin: 0; padding: 10px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         
-        /* BOX UTAMA */
         .container { width: 100%; max-width: 450px; background: white; padding: 20px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); display: flex; flex-direction: column; height: 90vh; max-height: 650px; }
         h2 { text-align: center; color: #1c1e21; margin-top: 0; margin-bottom: 15px; font-size: 24px; font-weight: 700; }
         
-        /* STYLE HALAMAN LOGIN & DAFTAR */
         .auth-screen { display: flex; flex-direction: column; justify-content: center; height: 100%; padding: 10px; }
         .auth-screen p { text-align: center; color: #65676b; font-size: 14px; margin-top: 0; margin-bottom: 20px; }
         .auth-box { display: flex; flex-direction: column; gap: 12px; }
@@ -20,7 +18,6 @@
         .auth-box input:focus { border-color: #1877f2; }
         .auth-links { text-align: center; margin-top: 15px; font-size: 13px; color: #1877f2; cursor: pointer; font-weight: 500; }
         
-        /* STYLE HALAMAN CHAT */
         .status-box { background: #e7f3ff; padding: 10px; border-radius: 10px; margin-bottom: 10px; font-size: 13px; color: #1877f2; text-align: center; font-weight: 500; border: 1px solid #d2e7ff; }
         .room-controls { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; background: #f7f8fa; padding: 10px; border-radius: 12px; }
         .input-group { display: flex; gap: 6px; }
@@ -34,6 +31,229 @@
         
         .chat-box { flex: 1; border: 1px solid #e4e6eb; border-radius: 12px; padding: 12px; overflow-y: auto; background: #f9fafb; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; }
         
+        .message-wrapper { display: flex; flex-direction: column; width: 100%; }
+        .message-wrapper.kamu { align-items: flex-end; } 
+        .message-wrapper.orang { align-items: flex-start; } 
+
+        .message { padding: 10px 14px; border-radius: 16px; max-width: 80%; word-break: break-word; font-size: 14px; line-height: 1.4; }
+        .message-wrapper.kamu .message { background: #00a884; color: white; border-bottom-right-radius: 4px; }
+        .message-wrapper.orang .message { background: #e4e6eb; color: #050505; border-bottom-left-radius: 4px; }
+        
+        .username-tag { font-size: 11px; font-weight: bold; margin-bottom: 3px; color: #65676b; }
+        .message-wrapper.kamu .username-tag { color: #00a884; text-align: right; margin-right: 4px; }
+        .message-wrapper.orang .username-tag { margin-left: 4px; }
+        .message.system { background: #fff3cd; color: #856404; font-style: italic; margin: 4px auto; font-size: 11px; text-align: center; width: 100%; border: 1px solid #ffeeba; border-radius: 8px; padding: 6px; }
+        
+        .input-box { display: flex; gap: 6px; align-items: center; }
+        .input-box input { flex: 1; padding: 12px 16px; border: 1px solid #ccd0d5; border-radius: 24px; font-size: 14px; outline: none; background: #f0f2f5; }
+        .input-box input:focus { background: white; border-color: #00a884; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="loginScreen" class="auth-screen">
+        <h2>Login Solstisiel</h2>
+        <p>Masuk menggunakan username kamu</p>
+        <div class="auth-box">
+            <input type="text" id="loginUser" placeholder="Username">
+            <input type="password" id="loginPass" placeholder="Password">
+            <button class="btn btn-blue" onclick="prosesLogin()">Masuk</button>
+        </div>
+        <div class="auth-links" onclick="pindahKeScreen('registerScreen')">Belum punya akun? Daftar di sini</div>
+    </div>
+
+    <div id="registerScreen" class="auth-screen hidden">
+        <h2>Daftar Akun</h2>
+        <p>Buat username unik yang belum dipakai orang lain</p>
+        <div class="auth-box">
+            <input type="text" id="regUser" placeholder="Username Baru (Hanya Huruf & Angka)">
+            <input type="password" id="regPass" placeholder="Password Baru">
+            <button class="btn btn-blue" onclick="prosesDaftar()">Buat Akun</button>
+        </div>
+        <div class="auth-links" onclick="pindahKeScreen('loginScreen')">Sudah punya akun? Login di sini</div>
+    </div>
+
+    <div id="chatScreen" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
+        <h2>Solstisiel</h2>
+        
+        <div class="status-box" id="statusRoom">Kamu berada di: <b>Global Chat</b></div>
+        
+        <div class="room-controls">
+            <button class="btn btn-purple" onclick="buatRoomAcak()">Buat Private Room Acak</button>
+            <div class="input-group">
+                <input type="text" id="kodeRoomInput" placeholder="Tempel kode ROOM-XXXXXX milik teman...">
+                <button class="btn btn-room-enter btn" onclick="gabungRoomManual()">Masuk</button>
+            </div>
+        </div>
+
+        <div class="chat-box" id="chatBox">
+            <div class="message system">Selamat datang di Global Chat! Semua orang bisa melihat pesanmu di sini.</div>
+        </div>
+
+        <div class="input-box">
+            <input type="text" id="pesanInput" placeholder="Ketik pesan kamu..." onkeypress="cekEnter(event)">
+            <button class="btn btn-green" onclick="kirimPesan()">Kirim</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyCtW62wK4HTiPgw7x_ZCju0_z1pEiJYbPE",
+        authDomain: "solstisiel.firebaseapp.com",
+        databaseURL: "https://solstisiel-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "solstisiel",
+        storageBucket: "solstisiel.firebasestorage.app",
+        messagingSenderId: "809987341662",
+        appId: "1:809987341662:web:f36fbacd414a2c82e963cf"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    let namaUser = localStorage.getItem('solstisiel_user') || '';
+    let roomAktif = 'global';
+    let dbRef = database.ref('chats/' + roomAktif);
+
+    // KONDISI JIKA SUDAH PERNAH LOGIN SEBELUMNYA
+    if (namaUser !== '') {
+        bukaAplikasiChat();
+    }
+
+    function pindahKeScreen(screenId) {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('registerScreen').classList.add('hidden');
+        document.getElementById('chatScreen').classList.add('hidden');
+        document.getElementById(screenId).classList.remove('hidden');
+    }
+
+    // PROSES DAFTAR AKUN BARU
+    function prosesDaftar() {
+        let user = document.getElementById('regUser').value.trim().toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
+        let pass = document.getElementById('regPass').value.trim();
+
+        if(user === '' || pass === '') return alert('Username dan password tidak boleh kosong!');
+        if(user === 'sistem' || user === 'global') return alert('Username ini dilarang!');
+
+        // Cek apakah username sudah ada di Firebase
+        database.ref('users/' + user).once('value', function(snapshot) {
+            if(snapshot.exists()) {
+                alert('Username "' + user + '" sudah dipakai orang lain! Coba cari nama unik lain.');
+            } else {
+                // Simpan data user ke database
+                database.ref('users/' + user).set({
+                    password: pass
+                }, function(error) {
+                    if(!error) {
+                        alert('Akun berhasil dibuat! Silakan login.');
+                        pindahKeScreen('loginScreen');
+                    }
+                });
+            }
+        });
+    }
+
+    // PROSES LOGIN AKTIF
+    function prosesLogin() {
+        let user = document.getElementById('loginUser').value.trim().toLowerCase();
+        let pass = document.getElementById('loginPass').value.trim();
+
+        if(user === '' || pass === '') return alert('Username dan password harus diisi!');
+
+        database.ref('users/' + user).once('value', function(snapshot) {
+            if(snapshot.exists()) {
+                let userData = snapshot.val();
+                if(userData.password === pass) {
+                    localStorage.setItem('solstisiel_user', user);
+                    namaUser = user;
+                    bukaAplikasiChat();
+                } else {
+                    alert('Password kamu salah!');
+                }
+            } else {
+                alert('Username tidak ditemukan! Pastikan sudah daftar dulu.');
+            }
+        });
+    }
+
+    function bukaAplikasiChat() {
+        pindahKeScreen('chatScreen');
+        dengerinChat();
+    }
+
+    function dengerinChat() {
+        dbRef.off();
+        dbRef.on('child_added', function(snapshot) {
+            const data = snapshot.val();
+            tampilkanPesan(data.pengirim, data.teks);
+        });
+    }
+
+    function kirimPesan() {
+        const input = document.getElementById('pesanInput');
+        const pesan = input.value.trim();
+        if (pesan === '') return;
+
+        dbRef.push({
+            pengirim: namaUser,
+            teks: pesan,
+            timestamp: Date.now()
+        });
+        input.value = '';
+    }
+
+    // BALIK KE KODE ACAK KAMAR (ROOM-XXXXXX)
+    function buatRoomAcak() {
+        const kodeAcak = "ROOM-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+        pindahKeRoom(kodeAcak);
+    }
+
+    function gabungRoomManual() {
+        const kodeInput = document.getElementById('kodeRoomInput').value.trim().toUpperCase();
+        if (kodeInput === '') return alert('Masukkan kode room terlebih dahulu!');
+        pindahKeRoom(kodeInput);
+    }
+
+    function pindahKeRoom(kodeRoom) {
+        roomAktif = kodeRoom;
+        dbRef = database.ref('chats/' + roomAktif);
+
+        const statusTeks = (kodeRoom === 'global') ? 'Kamu berada di: <b>Global Chat</b>' : 'Kamu berada di Private Room: <b style="color:#6f42c1;">' + kodeRoom + '</b>';
+        document.getElementById('statusRoom').innerHTML = statusTeks;
+        
+        const chatBox = document.getElementById('chatBox');
+        chatBox.innerHTML = '<div class="message system">Berhasil masuk ke ruang "' + kodeRoom + '". Salin kode ini dan bagikan ke teman obrolanmu!</div>';
+        
+        dengerinChat();
+    }
+
+    function tampilkanPesan(pengirim, teks) {
+        const chatBox = document.getElementById('chatBox');
+        const tipeUser = (pengirim === namaUser) ? 'kamu' : 'orang';
+        const wrapper = document.createElement('div');
+        wrapper.classList.add('message-wrapper', tipeUser);
+        
+        wrapper.innerHTML = '<span class="username-tag">' + pengirim + '</span>' +
+                            '<div class="message">' + teks + '</div>';
+        
+        chatBox.appendChild(wrapper);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function cekEnter(event) {
+        if (event.key === 'Enter') {
+            kirimPesan();
+        }
+    }
+</script>
+</body>
+</html>
         /* BALON CHAT KANAN KIRI */
         .message-wrapper { display: flex; flex-direction: column; width: 100%; }
         .message-wrapper.kamu { align-items: flex-end; } 
