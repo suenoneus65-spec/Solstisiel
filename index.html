@@ -3,37 +3,241 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat Lucu-Lucuan</title>
+    <title>Solstisiel Chat</title>
     <style>
         * { box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; margin: 0; padding: 10px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { width: 100%; max-width: 480px; background: white; padding: 20px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); display: flex; flex-direction: column; }
-        h2 { text-align: center; color: #1c1e21; margin-top: 0; margin-bottom: 15px; font-size: 22px; }
-        .status-box { background: #e7f3ff; padding: 12px; border-radius: 10px; margin-bottom: 15px; font-size: 14px; color: #1877f2; text-align: center; font-weight: 500; border: 1px solid #d2e7ff; }
-        .room-controls { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; background: #f7f8fa; padding: 12px; border-radius: 12px; }
-        .input-group { display: flex; gap: 8px; }
-        .room-controls input { flex: 1; padding: 10px 14px; border: 1px solid #ccd0d5; border-radius: 8px; font-size: 14px; outline: none; }
-        .btn { padding: 10px 16px; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
+        
+        .container { width: 100%; max-width: 480px; background: white; padding: 15px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); display: flex; flex-direction: column; height: 95vh; max-height: 720px; }
+        h2 { text-align: center; color: #1c1e21; margin-top: 0; margin-bottom: 10px; font-size: 24px; font-weight: 700; letter-spacing: 0.5px; }
+        
+        .status-box { background: #e7f3ff; padding: 10px; border-radius: 10px; margin-bottom: 10px; font-size: 13px; color: #1877f2; text-align: center; font-weight: 500; border: 1px solid #d2e7ff; }
+        .room-controls { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; background: #f7f8fa; padding: 10px; border-radius: 12px; }
+        .input-group { display: flex; gap: 6px; }
+        .room-controls input { flex: 1; padding: 8px 12px; border: 1px solid #ccd0d5; border-radius: 8px; font-size: 13px; outline: none; }
+        
+        .btn { padding: 9px 14px; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; transition: background 0.2s; }
         .btn-blue { background: #1877f2; }
-        .btn-purple { background: #6f42c1; padding: 12px; font-size: 14px; }
-        .chat-box { height: 280px; border: 1px solid #e4e6eb; border-radius: 12px; padding: 12px; overflow-y: auto; background: #f9fafb; margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px; }
-        .message { padding: 10px 14px; border-radius: 14px; background: #e4e6eb; color: #050505; width: fit-content; max-width: 85%; word-break: break-word; font-size: 15px; line-height: 1.4; }
+        .btn-blue:hover { background: #145dbf; }
+        .btn-purple { background: #6f42c1; padding: 10px; font-size: 13px; }
+        .btn-purple:hover { background: #59339e; }
+        
+        .chat-box { flex: 1; border: 1px solid #e4e6eb; border-radius: 12px; padding: 12px; overflow-y: auto; background: #f9fafb; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; }
+        
+        .message-wrapper { display: flex; flex-direction: column; width: 100%; }
+        .message-wrapper.kamu { align-items: flex-end; } 
+        .message-wrapper.orang { align-items: flex-start; } 
+
+        .message { padding: 10px 14px; border-radius: 16px; max-width: 80%; word-break: break-word; font-size: 14px; line-height: 1.4; position: relative; }
+        .message-wrapper.kamu .message { background: #00a884; color: white; border-bottom-right-radius: 4px; }
+        .message-wrapper.orang .message { background: #e4e6eb; color: #050505; border-bottom-left-radius: 4px; }
+        
+        .username-tag { font-size: 11px; font-weight: bold; margin-bottom: 3px; color: #65676b; }
+        .message-wrapper.kamu .username-tag { color: #00a884; text-align: right; margin-right: 4px; }
+        .message-wrapper.orang .username-tag { margin-left: 4px; }
+
         .message.system { background: #fff3cd; color: #856404; font-style: italic; margin: 4px auto; font-size: 12px; text-align: center; width: 100%; border: 1px solid #ffeeba; border-radius: 8px; padding: 8px; }
-        .input-box { display: flex; gap: 8px; }
-        .input-box input { flex: 1; padding: 12px 16px; border: 1px solid #ccd0d5; border-radius: 24px; font-size: 14px; outline: none; }
-        .btn-green { background: #00a884; border-radius: 24px; padding: 12px 20px; }
+        
+        /* STYLE TAMPILAN RECENT ROOMS */
+        .recent-rooms { margin-bottom: 12px; background: #fff; border: 1px solid #e4e6eb; padding: 8px; border-radius: 10px; }
+        .recent-title { font-size: 12px; color: #65676b; font-weight: bold; margin-bottom: 6px; }
+        .room-tags-container { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+        .room-tag { background: #e4e6eb; color: #050505; padding: 5px 10px; border-radius: 12px; font-size: 12px; cursor: pointer; white-space: nowrap; font-weight: 500; }
+        .room-tag:hover { background: #d8dadf; }
+        
+        .input-box { display: flex; gap: 6px; align-items: center; }
+        .input-box input { flex: 1; padding: 12px 16px; border: 1px solid #ccd0d5; border-radius: 24px; font-size: 14px; outline: none; background: #f0f2f5; }
+        .input-box input:focus { background: white; border-color: #00a884; }
+        .btn-green { background: #00a884; border-radius: 24px; padding: 12px 20px; font-size: 14px; }
+
+        @media (max-height: 600px) {
+            .container { height: 100vh; max-height: 100vh; border-radius: 0; padding: 8px; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>💬 Ruang Ngobrol</h2>
+    <h2> Solstisiel</h2>
     
     <div class="status-box" id="statusRoom">Kamu berada di: <b>Global Chat</b></div>
     
     <div class="room-controls">
-        <button class="btn btn-purple" onclick="buatRoomOtomatis()">✨ Buat Room Privat Baru</button>
+        <button class="btn btn-purple" onclick="buatGrupCustom()">✨ Buat Grup Baru (Nama Custom)</button>
         
+        <div class="input-group">
+            <input type="text" id="kodeRoomInput" placeholder="Masuk nama grup / room privat...">
+            <button class="btn btn-blue" onclick="gabungRoomManual()">Masuk</button>
+        </div>
+    </div>
+
+    <div class="recent-rooms">
+        <div class="recent-title">History Grup Kamu:</div>
+        <div class="room-tags-container" id="recentRoomsContainer">
+            <div class="room-tag" onclick="pindahKeRoom('global')">🌏 Global Chat</div>
+        </div>
+    </div>
+
+    <div class="chat-box" id="chatBox">
+        <div class="message system">Selamat datang di Global Chat! Semua orang bisa melihat pesanmu di sini.</div>
+    </div>
+
+    <div class="input-box">
+        <input type="text" id="pesanInput" placeholder="Ketik pesan kamu..." onkeypress="cekEnter(event)">
+        <button class="btn btn-green" onclick="kirimPesan()">Kirim</button>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyCtW62wK4HTiPgw7x_ZCju0_z1pEiJYbPE",
+        authDomain: "solstisiel.firebaseapp.com",
+        databaseURL: "https://solstisiel-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "solstisiel",
+        storageBucket: "solstisiel.firebasestorage.app",
+        messagingSenderId: "809987341662",
+        appId: "1:809987341662:web:f36fbacd414a2c82e963cf"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    let inputNama = prompt("Masukkan nama panggilan kamu untuk dichat:", "");
+    if (inputNama !== null) inputNama = inputNama.trim();
+    const namaUser = (inputNama && inputNama !== "") ? inputNama : "User-" + Math.random().toString(36).substring(2, 5).toUpperCase();
+
+    let roomAktif = 'global';
+    let dbRef = database.ref('chats/' + roomAktif);
+
+    function dengerinChat() {
+        dbRef.off();
+        dbRef.on('child_added', function(snapshot) {
+            const data = snapshot.val();
+            tampilkanPesan(data.pengirim, data.teks);
+        });
+    }
+
+    dengerinChat();
+    tampilkanHistoryGrup();
+
+    function kirimPesan() {
+        const input = document.getElementById('pesanInput');
+        const pesan = input.value.trim();
+        if (pesan === '') return;
+
+        dbRef.push({
+            pengirim: namaUser,
+            teks: pesan,
+            timestamp: Date.now()
+        });
+        
+        input.value = '';
+    }
+
+    // FITUR MEMBUAT GRUP DENGAN NAMA CUSTOM + CEK DUPLIKAT DI FIREBASE
+    function buatGrupCustom() {
+        let namaGrup = prompt("Masukkan nama grup/room baru yang kamu mau:", "");
+        if (!namaGrup) return;
+        
+        namaGrup = namaGrup.trim().replace(/[^a-zA-Z0-9-_]/g, '').toLowerCase(); // Bersihkan karakter aneh
+        if (namaGrup === '' || namaGrup === 'global') return alert('Nama grup tidak valid atau tidak boleh pakai nama "global"!');
+
+        // Cek ke Firebase apakah room dengan nama tersebut sudah pernah ada isinya
+        database.ref('chats/' + namaGrup).once('value', function(snapshot) {
+            if (snapshot.exists()) {
+                alert('Waduh! Grup dengan nama "' + namaGrup + '" sudah pernah dibuat orang lain. Coba cari nama lain yang unik ya!');
+            } else {
+                // Jika belum ada, buat room baru dengan pesan sambutan pertama
+                database.ref('chats/' + namaGrup).push({
+                    pengirim: 'Sistem',
+                    teks: 'Grup "' + namaGrup + '" resmi dibuat oleh ' + namaUser + '!',
+                    timestamp: Date.now()
+                });
+                pindahKeRoom(namaGrup);
+            }
+        });
+    }
+
+    function gabungRoomManual() {
+        const kodeInput = document.getElementById('kodeRoomInput').value.trim().toLowerCase();
+        if (kodeInput === '') return alert('Masukkan nama grup terlebih dahulu!');
+        pindahKeRoom(kodeInput);
+    }
+
+    function pindahKeRoom(kodeRoom) {
+        roomAktif = kodeRoom;
+        dbRef = database.ref('chats/' + roomAktif);
+
+        const statusTeks = (kodeRoom === 'global') ? 'Kamu berada di: <b>Global Chat</b>' : 'Kamu berada di Grup: <b style="color:#6f42c1;">' + kodeRoom + '</b>';
+        document.getElementById('statusRoom').innerHTML = statusTeks;
+        
+        const chatBox = document.getElementById('chatBox');
+        chatBox.innerHTML = ''; // Reset kotak chat sebelum render ulang
+        
+        // Simpan room ke dalam history localStorage (kecuali global chat)
+        if (kodeRoom !== 'global') {
+            simpanKeHistory(kodeRoom);
+        }
+        
+        dengerinChat();
+    }
+
+    function tampilkanPesan(pengirim, teks) {
+        const chatBox = document.getElementById('chatBox');
+        
+        if (pengirim === 'Sistem') {
+            const elemenSistem = document.createElement('div');
+            elemenSistem.classList.add('message', 'system');
+            elemenSistem.innerText = teks;
+            chatBox.appendChild(elemenSistem);
+        } else {
+            const tipeUser = (pengirim === namaUser) ? 'kamu' : 'orang';
+            const wrapper = document.createElement('div');
+            wrapper.classList.add('message-wrapper', tipeUser);
+            
+            wrapper.innerHTML = '<span class="username-tag">' + pengirim + '</span>' +
+                                '<div class="message">' + teks + '</div>';
+            
+            chatBox.appendChild(wrapper);
+        }
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // FUNGSI MANAGEMENT HISTORY STORAGE
+    function simpanKeHistory(room) {
+        let listGrup = JSON.parse(localStorage.getItem('solstisiel_rooms')) || [];
+        if (!listGrup.includes(room)) {
+            listGrup.push(room);
+            localStorage.setItem('solstisiel_rooms', JSON.stringify(listGrup));
+            tampilkanHistoryGrup();
+        }
+    }
+
+    function tampilkanHistoryGrup() {
+        const container = document.getElementById('recentRoomsContainer');
+        let listGrup = JSON.parse(localStorage.getItem('solstisiel_rooms')) || [];
+        
+        // Selalu taruh Global Chat di depan
+        let html = '<div class="room-tag" onclick="pindahKeRoom(\'global\')">🌏 Global Chat</div>';
+        
+        listGrup.forEach(function(room) {
+            html += '<div class="room-tag" onclick="pindahKeRoom(\'' + room + '\')">👥 ' + room + '</div>';
+        });
+        
+        container.innerHTML = html;
+    }
+
+    function cekEnter(event) {
+        if (event.key === 'Enter') {
+            kirimPesan();
+        }
+    }
+</script>
+</body>
+</html>
         <div class="input-group">
             <input type="text" id="kodeRoomInput" placeholder="Atau tempel kode room teman...">
             <button class="btn btn-blue" onclick="gabungRoomManual()">Masuk</button>
